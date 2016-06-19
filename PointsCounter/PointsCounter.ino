@@ -32,6 +32,8 @@ int adminButtonState = 0;
 
 bool adminMode = false;
 
+char serialBuffer[10];
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   lcd.init();
@@ -97,7 +99,7 @@ void loop() {
   delay(1000);
   redButtonState = digitalRead(redButton);
   greenButtonState = digitalRead(greenButton);
-  if(!adminMode){    
+  if(adminButtonState == 0){    
     //lcd.clear();
     buttonState();
   //  
@@ -149,25 +151,34 @@ void loop() {
 void admin(){
   adminButtonState = digitalRead(adminButton);
   if (adminButtonState == 1){
-    lcd.clear();
     lcd.setCursor(0,0);    
-    lcd.print("ADMIN MODE:");
+    lcd.print("                "); 
+    lcd.setCursor(0,0);    
+    lcd.print("ADMIN MODE");
+
+    //first loop after press admin button
     if(!adminMode){
-      adminMode = true;
-      lcd.setCursor(12,0);    
-      lcd.print("ON");
+      Serial.begin(9600);  
+      Serial.println("Welcome to Airsoft Points Counter Admin console");
+      Serial.println("Source code is avialable there: ");
+      Serial.println("https://github.com/zBritva/AirsoftPointsCounter");
+      Serial.println("License GPLv3");  
+      adminMode = false;    
     }
     else{
-      adminMode = false;
-      lcd.setCursor(12,0);    
-      lcd.print("OFF"); 
-      delay(1000);
-      lcd.setCursor(0,0);    
-      lcd.print("                "); 
-      return;
+      if (Serial.available()) {  
+        serialBuffer = Serial.readString();
+
+        if(serialBuffer == "help"){
+          printHelp
+        }
+      }
     }
-    delay(1000);
   }
+}
+
+void printHelp(){
+  Serial.println("help - print this");  
 }
 
 void buttonState(){
