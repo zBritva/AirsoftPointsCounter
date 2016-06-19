@@ -110,6 +110,7 @@ void init_game_settings(){
 // the setup function runs once when you press reset or power the board
 void setup() {
   loadSettings();
+  init_game_settings();
   lcd.init();
   lcd.backlight(); 
   lcd.setCursor(0,0);
@@ -126,7 +127,6 @@ void setup() {
   greenButtonState = 0;
   redButtonState = 0;
   adminButtonState = digitalRead(adminButton);
-  Serial.begin(9600);
 }
 
 void blink(){
@@ -134,6 +134,16 @@ void blink(){
   delay(750);              
   digitalWrite(ledPin, LOW);
   delay(750);
+}
+
+void soft_reset()
+{
+  redPoints = 0;
+  greenPoints = 0;
+  redPointsLoop = 0;
+  greenPointsLoop = 0;
+  teamFlag = 0;
+  savePoints();
 }
 
 void printClock(){
@@ -293,11 +303,7 @@ void admin()
   redButtonState = digitalRead(redButton);
   greenButtonState = digitalRead(greenButton);  
   if (greenButtonState == 1 && redButtonState == 1){
-    redPoints = 0;
-    greenPoints = 0;
-    redPointsLoop = 0;
-    greenPointsLoop = 0;
-    savePoints();
+    soft_reset();
     lcd.setCursor(0,1);
     lcd.print("                "); 
     lcd.setCursor(0,1);
@@ -368,6 +374,14 @@ void printHelp(){
   //Serial.println("settings            - print current settings of game");
   //Serial.println("set <param> <value> - set settings value");
   Serial.println("reset               - erase memmory, reset to default settings");  
+  
+  Serial.println("GAME MODE SETTINGS:");  
+  if(currentGameMode == 0){
+    Serial.println("HOLD THE POINT:");  
+  }
+  if(currentGameMode == 1){
+    Serial.println("CAPTURE THE POINT:");  
+  }
 }
 
 void list_games()
