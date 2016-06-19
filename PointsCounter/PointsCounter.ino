@@ -101,10 +101,9 @@ void init_game_settings(){
   redPointsLoop = 0;
   greenPoints = 0;
   redPoints = 0;
-  loadPoints();
-  
-  capturing = 0;
   teamFlag = 0;
+  loadPoints();
+  capturing = 0;
 }
 
 // the setup function runs once when you press reset or power the board
