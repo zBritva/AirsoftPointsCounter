@@ -29,6 +29,7 @@ const int redPointsAddr = 0; //need 2 bytes
 const int greenPointsAddr = 2; //need 2 bytes
 const int gameModeAddr = 4; //need 1 byte
 const int captureTimeAddr = 5; //need 1 byte
+const int teamFlagAddr = 6; //need 1 byte
 
 int redButtonState = 0;
 int greenButtonState = 0;
@@ -56,6 +57,8 @@ void loadPoints(){
   
   greenPoints = EEPROM.read(greenPointsAddr);
   greenPointsLoop = EEPROM.read(greenPointsAddr + 1);  
+  
+  teamFlag = EEPROM.read(teamFlagAddr);  
 }
 
 void savePoints(){
@@ -64,6 +67,8 @@ void savePoints(){
   
   EEPROM.write(greenPointsAddr, greenPoints);
   EEPROM.write(greenPointsAddr + 1, greenPointsLoop);
+  
+  EEPROM.write(teamFlagAddr, teamFlag);
 }
 
 void loadSettings()
@@ -78,6 +83,30 @@ void saveSettings()
   EEPROM.write(captureTimeAddr, captureTime);
 }
 
+void set_default(){
+  EEPROM.write(gameModeAddr, 0);
+  EEPROM.write(redPointsAddr, 0);
+  EEPROM.write(redPointsAddr + 1, 0);
+  EEPROM.write(greenPointsAddr, 0);
+  EEPROM.write(greenPointsAddr + 1, 0);
+  EEPROM.write(captureTimeAddr, 10);
+  EEPROM.write(teamFlagAddr, 0);
+  Serial.println("Default settings was set");  
+  Serial.println("Please restart device");  
+}
+
+void init_game_settings(){
+  //Ordering is mandatory
+  greenPointsLoop = 0;
+  redPointsLoop = 0;
+  greenPoints = 0;
+  redPoints = 0;
+  loadPoints();
+  
+  capturing = 0;
+  teamFlag = 0;
+}
+
 // the setup function runs once when you press reset or power the board
 void setup() {
   loadSettings();
@@ -85,6 +114,9 @@ void setup() {
   lcd.backlight(); 
   lcd.setCursor(0,0);
   lcd.print("Hello, players!");
+  lcd.setCursor(0,1);
+  lcd.print("GAME ");
+  lcd.print(currentGameMode);
   delay(1000);
   // initialize digital pin 13 as an output.
   //pinMode(ledPin, OUTPUT);
@@ -93,10 +125,8 @@ void setup() {
   lcd.clear();
   greenButtonState = 0;
   redButtonState = 0;
-  greenPointsLoop = 0;
-  redPointsLoop = 0;
-  loadPoints();
   adminButtonState = digitalRead(adminButton);
+  Serial.begin(9600);
 }
 
 void blink(){
@@ -145,6 +175,7 @@ void loop() {
   delay(1000);
   redButtonState = digitalRead(redButton);
   greenButtonState = digitalRead(greenButton);
+  adminButtonState = digitalRead(adminButton);
   if(adminButtonState == 0){    
     if(currentGameMode == 0)
       holdThePoint();
@@ -174,23 +205,25 @@ void captureThePoint()
     lcd.print(" CONFLICT STATE");
     return;
   }
+  
+  redButtonState = digitalRead(redButton);
+  greenButtonState = digitalRead(greenButton);
+    
   //Capturing enabled only if another team captured this point
   if (redButtonState == 1 && teamFlag != 2){
     capturing++;
     
-    if(capturing > captureTime){
+    if(capturing >= captureTime){
       teamFlag = 2;
       capturing = 0;
     }
   }
-  else{
-    capturing = 0;    
-  }
+  else
   //Capturing enabled only if another team captured this point
   if (greenButtonState == 1  && teamFlag != 1){
     capturing++;
         
-    if(capturing > captureTime){
+    if(capturing >= captureTime){
       teamFlag = 1;
       capturing = 0;
     }
@@ -198,11 +231,20 @@ void captureThePoint()
   else{
     capturing = 0;
   }
-  
+      
   if(capturing > 0){
-    lcd.setCursor(0,1);    
+    lcd.setCursor(0,0);    
     lcd.print("CAPTURING: ");
     lcd.print(capturing);
+  }
+  else{
+    lcd.setCursor(0,0);   
+    if(teamFlag == 2)
+     lcd.print("RED");    
+    if(teamFlag == 1)
+     lcd.print("GREEN");   
+    if(teamFlag == 0)
+     lcd.print("NEUTRAL"); 
   }
   
   if(teamFlag == 2)
@@ -303,13 +345,18 @@ void checkAdminMode(){
           Serial.print("GAME: ");
           Serial.println(currentGameMode);
         }
+        if(serialBuffer == "reset"){
+          set_default();  
+        }
       }
     }
   }
   else{
-    adminMode = false;
-    Serial.println("Admin mode: OFF");  
-    Serial.end();
+    if(adminMode == true){
+      adminMode = false;
+      Serial.println("Admin mode: OFF");  
+      Serial.end();
+    }
   }
 }
 
@@ -320,7 +367,7 @@ void printHelp(){
   Serial.println("game                - print current game mode");
   //Serial.println("settings            - print current settings of game");
   //Serial.println("set <param> <value> - set settings value");
-  //Serial.println("reset               - erase memmory, reset to default settings");  
+  Serial.println("reset               - erase memmory, reset to default settings");  
 }
 
 void list_games()
