@@ -1,6 +1,14 @@
+#include <Time.h>
+
+#include <DS1307RTC.h>
+
 #include <EEPROM.h>
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
+
+//CLOCK
+#define DS1307_I2C_ADDRESS 0x68  // This is the I2C address
+byte _second, _minute, _hour, _dayOfWeek, _dayOfMonth, _month, _year;
 
 LiquidCrystal_I2C lcd(0x27,16,2);
 int ledPin = 10;
@@ -48,8 +56,11 @@ int capturing = 0;
 //2 - red
 int teamFlag = 0; 
 
+//DEFINE FUNCTIONS
 void checkAdminMode();
 void buttonState();
+//byte bcdToDec(byte val);
+//byte decToBcd(byte val);
 
 void loadPoints(){
   redPoints = EEPROM.read(redPointsAddr);
@@ -126,6 +137,9 @@ void setup() {
   greenButtonState = 0;
   redButtonState = 0;
   adminButtonState = digitalRead(adminButton);
+  
+  test_clock();
+  Serial.begin(9600);
 }
 
 void blink(){
@@ -179,8 +193,50 @@ void updatePointLoops(){
  } 
 }
 
+void print2digits(int number) 
+{
+ if (number >= 0 && number < 10) 
+ {
+  Serial.write('0');
+ }
+ Serial.print(number);
+}
+
 // the loop function runs over and over again forever
 void loop() {
+  
+  tmElements_t tm;
+  if (RTC.read(tm)) 
+  {
+    Serial.print("Ok, Time = ");
+    print2digits(tm.Hour);
+    Serial.write(':');
+    print2digits(tm.Minute);
+    Serial.write(':');
+    print2digits(tm.Second);
+    Serial.print(", Date (D/M/Y) = ");
+    Serial.print(tm.Day);
+    Serial.write('/');
+    Serial.print(tm.Month);
+    Serial.write('/');
+    Serial.print(tmYearToCalendar(tm.Year));
+    Serial.println();
+  }
+  else 
+  {
+    if (RTC.chipPresent()) 
+    {
+      Serial.println("The DS1307 is stopped. Please run the SetTime");
+      Serial.println("example to initialize the time and begin running.");
+      Serial.println();
+    } 
+    else 
+    {
+      Serial.println("DS1307 read error! Please check the circuitry.");
+      Serial.println();
+    }
+  }
+  
   delay(1000);
   redButtonState = digitalRead(redButton);
   greenButtonState = digitalRead(greenButton);
@@ -410,3 +466,32 @@ void buttonState(){
   lcd.setCursor(12,0);    
   lcd.print(greenButtonState);
 }
+
+
+// Convert normal decimal numbers to binary coded decimal
+byte decToBcd(byte val)
+{
+  return ( (val/10*16) + (val%10) );
+}
+ 
+// Convert binary coded decimal to normal decimal numbers
+byte bcdToDec(byte val)
+{
+  return ( (val/16*10) + (val%16) );
+}
+
+void printDigits(int digits) {
+  //выводим время через ":"
+  Serial.print(":");
+  if (digits < 10)
+    Serial.print('0');
+  Serial.print(digits);
+}
+
+bool isTimeSet = false; 
+
+void test_clock()
+{  
+
+}
+
