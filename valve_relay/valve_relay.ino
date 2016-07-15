@@ -25,6 +25,7 @@ int deviderPower = 255 / powerMaxDelay;
 void setup() {
   pinMode(outputPin,OUTPUT);  //сюда подключено реле
   pinMode(buttonPin,INPUT);  //считываем состояние кнопки
+  current_firemode = 1;
 }
 
 void loop() {
@@ -56,7 +57,7 @@ void loop() {
     delay(currentFireRate);   //защита от дребезга
   }
 
-  if (digitalRead(buttonPin)==0 && flag==1) {  //если кнопка отпущена и поднят флаг (былсовершён выстрел)
+  if (digitalRead(buttonPin)==0 && (flag==1 || current_firemode == 2)) {  //если кнопка отпущена и поднят флаг (былсовершён выстрел)
     flag=0;  //опустить флаг
   }
   delay(2);  //задержка для стабильности работы

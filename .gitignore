@@ -27,3 +27,5 @@
 *.exe
 *.out
 *.app
+valve_relay/valve_relay.ino.eightanaloginputs.hex
+*.hex
