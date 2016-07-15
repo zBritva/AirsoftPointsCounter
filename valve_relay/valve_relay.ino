@@ -25,6 +25,7 @@ int deviderPower = 255 / powerMaxDelay;
 void setup() {
   pinMode(outputPin,OUTPUT);  //сюда подключено реле
   pinMode(buttonPin,INPUT);  //считываем состояние кнопки
+  //TODO add firemode change
   current_firemode = 1;
 }
 
@@ -44,21 +45,22 @@ void loop() {
     
   if(currentFireRate > rateMaxDelay)
     currentFireRate = rateMaxDelay;  
-  
+    
   //shot off
-  if(current_firemode == 0)
-    return;
+  if(current_firemode != 0){
+    if (digitalRead(buttonPin)==1 && (flag==0)) {   //если кнопка нажата и флаг опущен
+      digitalWrite(outputPin,HIGH);  //открыть клапан
+      delay(currentPower);   //подождать чутка
+      digitalWrite(outputPin,LOW);  //закрыть клапан
+      flag=1;  //поднять паруса! Ой, флаг
+      delay(currentFireRate);   //защита от дребезга
+    }
   
-  if (digitalRead(buttonPin)==1 && (flag==0 || current_firemode == 2)) {   //если кнопка нажата и флаг опущен
-    digitalWrite(outputPin,HIGH);  //открыть клапан
-    delay(currentPower);   //подождать чутка
-    digitalWrite(outputPin,LOW);  //закрыть клапан
-    flag=1;  //поднять паруса! Ой, флаг
-    delay(currentFireRate);   //защита от дребезга
+    if ((digitalRead(buttonPin)==0 || current_firemode == 2) && (flag==1)) {  //если кнопка отпущена и поднят флаг (былсовершён выстрел)
+      flag=0;  //опустить флаг
+    }
+    delay(2);  //задержка для стабильности работы
   }
-
-  if (digitalRead(buttonPin)==0 && (flag==1 || current_firemode == 2)) {  //если кнопка отпущена и поднят флаг (былсовершён выстрел)
-    flag=0;  //опустить флаг
-  }
-  delay(2);  //задержка для стабильности работы
+  digitalWrite(outputPin,LOW);  //закрыть клапан
+  digitalWrite(buttonPin,LOW);
 }
