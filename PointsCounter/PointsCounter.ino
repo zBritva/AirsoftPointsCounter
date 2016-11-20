@@ -1,16 +1,14 @@
 #include <Time.h>
-
+#include <TM1637.h>
 #include <DS1307RTC.h>
 
 #include <EEPROM.h>
 #include <Wire.h>
-#include <LiquidCrystal_I2C.h>
 
 //CLOCK
 #define DS1307_I2C_ADDRESS 0x68  // This is the I2C address
 byte _second, _minute, _hour, _dayOfWeek, _dayOfMonth, _month, _year;
 
-LiquidCrystal_I2C lcd(0x27,16,2);
 int ledPin = 10;
 
 int currentGameMode = 0;
@@ -18,7 +16,7 @@ int currentGameMode = 0;
 //const int greenPin = 2;
 //const int redPin = 3;
 
-const int adminButton = 5;
+const int adminButton = 9;
 const int incButton = 11;
 const int decButton = 10;
 const int confButton = 9;
@@ -31,7 +29,7 @@ int redPointsLoop = 0;
 int greenPointsLoop = 0;
 
 const int redButton = 7;
-const int greenButton = 6;
+const int greenButton = 8;
 
 const int redPointsAddr = 0; //need 2 bytes
 const int greenPointsAddr = 2; //need 2 bytes
@@ -55,6 +53,15 @@ int capturing = 0;
 //1 - green
 //2 - red
 int teamFlag = 0; 
+
+const int RED_LED_CLK = 3; 
+const int RED_LED_DIO = 2; 
+
+const int GREEN_LED_DIO = 6;
+const int GREEN_LED_CLK = 5;
+
+TM1637 red_tm1637(RED_LED_CLK,RED_LED_DIO);
+TM1637 green_tm1637(GREEN_LED_CLK,GREEN_LED_DIO);
 
 //DEFINE FUNCTIONS
 void checkAdminMode();
@@ -119,21 +126,30 @@ void init_game_settings(){
 
 // the setup function runs once when you press reset or power the board
 void setup() {
-  loadSettings();
-  init_game_settings();
-  lcd.init();
+  pinMode(6, OUTPUT);
+  digitalWrite(6, HIGH);
+  delay(1000);
+  //loadSettings();
+  //init_game_settings();
+/*  lcd.init();
   lcd.backlight(); 
   lcd.setCursor(0,0);
   lcd.print("Hello, players!");
   lcd.setCursor(0,1);
   lcd.print("GAME ");
-  lcd.print(currentGameMode);
+  lcd.print(currentGameMode); */
+  
+  red_tm1637.display(0,10);
+  red_tm1637.display(1,11);
+  red_tm1637.display(2,12);
+  red_tm1637.display(3,13);
+  green_tm1637.display(0,currentGameMode);
   delay(1000);
   // initialize digital pin 13 as an output.
   //pinMode(ledPin, OUTPUT);
   pinMode(redButton, INPUT);
   pinMode(greenButton, INPUT);
-  lcd.clear();
+  //lcd.clear();
   greenButtonState = 0;
   redButtonState = 0;
   adminButtonState = digitalRead(adminButton);
@@ -160,26 +176,28 @@ void soft_reset()
 }
 
 void printClock(){
-  lcd.setCursor(0,0);    
-  lcd.print("TIME:");  
+  //lcd.setCursor(0,0);    
+  //lcd.print("TIME:");  
 }
 
 void printRedPoints(){  
-  lcd.setCursor(9,1);   
+  red_tm1637.display(redPoints + (255 * redPointsLoop));
+  /*lcd.setCursor(9,1);   
   lcd.print("RED:");
   lcd.setCursor(13,1);    
   lcd.print("   ");
   lcd.setCursor(13,1);    
-  lcd.print(redPoints + (255 * redPointsLoop));
+  lcd.print(redPoints + (255 * redPointsLoop));*/
 }
 
 void printGreenPoints(){
-  lcd.setCursor(0,1);   
+  green_tm1637.display(redPoints + (255 * redPointsLoop));
+  /*lcd.setCursor(0,1);   
   lcd.print("GREEN:");
   lcd.setCursor(6,1);    
   lcd.print("   ");
   lcd.setCursor(6,1);    
-  lcd.print(greenPoints + (255 * greenPointsLoop));
+  lcd.print(greenPoints + (255 * greenPointsLoop));*/
 }
 
 void updatePointLoops(){
@@ -248,8 +266,8 @@ void loop() {
     if(currentGameMode == 1)
       captureThePoint();
     else{
-      lcd.setCursor(0,1);    
-      lcd.print("G.MODE ISN'T SET");
+      //lcd.setCursor(0,1);    
+      //lcd.print("G.MODE ISN'T SET");
     }
   }
   else{
@@ -264,10 +282,10 @@ void loop() {
 void captureThePoint()
 {
   buttonState();    
-  lcd.clear();
+  //lcd.clear();
   if (greenButtonState == 1 && redButtonState == 1){
-    lcd.setCursor(0,1);    
-    lcd.print(" CONFLICT STATE");
+    //lcd.setCursor(0,1);    
+    //lcd.print(" CONFLICT STATE");
     return;
   }
   
@@ -298,18 +316,20 @@ void captureThePoint()
   }
       
   if(capturing > 0){
-    lcd.setCursor(0,0);    
-    lcd.print("CAPTURING: ");
-    lcd.print(capturing);
+    //lcd.setCursor(0,0);    
+    //lcd.print("CAPTURING: ");
+    //lcd.print(capturing);
+    red_tm1637.display(0,12);
+    green_tm1637.display(0,capturing);
   }
   else{
-    lcd.setCursor(0,0);   
-    if(teamFlag == 2)
-     lcd.print("RED");    
-    if(teamFlag == 1)
-     lcd.print("GREEN");   
-    if(teamFlag == 0)
-     lcd.print("NEUTRAL"); 
+    //lcd.setCursor(0,0);   
+    //if(teamFlag == 2)
+    //lcd.print("RED");    
+    //if(teamFlag == 1)
+    //lcd.print("GREEN");   
+    //if(teamFlag == 0)
+    //lcd.print("NEUTRAL"); 
   }
   
   if(teamFlag == 2)
@@ -331,10 +351,12 @@ void captureThePoint()
 void holdThePoint()
 {
   buttonState();    
-  lcd.clear();
+  //lcd.clear();
   if (greenButtonState == 1 && redButtonState == 1){
-    lcd.setCursor(0,1);    
-    lcd.print(" CONFLICT STATE");
+    //lcd.setCursor(0,1);    
+    //lcd.print(" CONFLICT STATE");
+    red_tm1637.display(0,12);
+    green_tm1637.display(0,12);
     return;
   }
   if (redButtonState == 1){
@@ -352,17 +374,17 @@ void holdThePoint()
 
 void admin()
 {
-  lcd.setCursor(0,1);    
-  lcd.print("PRES.BTNs TO RST"); 
+  //lcd.setCursor(0,1);    
+  //lcd.print("PRES.BTNs TO RST"); 
   buttonState();
   redButtonState = digitalRead(redButton);
   greenButtonState = digitalRead(greenButton);  
   if (greenButtonState == 1 && redButtonState == 1){
     soft_reset();
-    lcd.setCursor(0,1);
+    /*lcd.setCursor(0,1);
     lcd.print("                "); 
     lcd.setCursor(0,1);
-    lcd.print("RESET DONE"); 
+    lcd.print("RESET DONE"); */
     delay(1000);
   }
 }
@@ -371,10 +393,12 @@ void admin()
 void checkAdminMode(){
   adminButtonState = digitalRead(adminButton);
   if (adminButtonState == 1){
-    lcd.setCursor(0,0);    
+    /*lcd.setCursor(0,0);    
     lcd.print("                "); 
     lcd.setCursor(0,0);    
-    lcd.print("ADMIN MODE");
+    lcd.print("ADMIN MODE");*/
+    red_tm1637.display(0,10);
+    green_tm1637.display(0,10);
 
     //first loop after press admin button
     if(!adminMode){
@@ -456,7 +480,7 @@ void set_game(int game)
 
 void buttonState(){
   return;
-  lcd.setCursor(0,0);    
+  /*lcd.setCursor(0,0);    
   lcd.print("                "); 
   lcd.setCursor(0,0);    
   lcd.print("DEBUG:");
@@ -464,7 +488,7 @@ void buttonState(){
   lcd.print(redButtonState);
     
   lcd.setCursor(12,0);    
-  lcd.print(greenButtonState);
+  lcd.print(greenButtonState);*/
 }
 
 
