@@ -1,0 +1,7 @@
+{
+    "arduino.path": "/Applications",
+    "board": "arduino:avr:pro",
+    "configuration": "cpu=16MHzatmega328",
+    "programmer": "AVRISP mkII",
+    "sketch": "sketch_aug04a.ino"
+}
