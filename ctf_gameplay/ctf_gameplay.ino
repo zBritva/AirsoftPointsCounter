@@ -2,55 +2,36 @@
 #include <EEPROM.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
+#include "const.h"
 
-int yellowCount = 0;
-int greenCount = 0;
+short yellowCount = 0;
+short greenCount = 0;
 
-const int YELLOW_LED_CLK = 4;
-const int YELLOW_LED_DIO = 3; 
-
-const int GREEN_LED_CLK = 6;
-const int GREEN_LED_DIO = 5;
-
-const int GREEN_BUTTON = 8;
-const int YELLOW_BUTTON = 9;
-
-const int SERVICE_BUTTON = 2;
-
-
-const int GREEN_POINTS_ADDR_1 = 0;
-const int GREEN_POINTS_ADDR_2 = 1;
-
-
-const int YELLOW_POINTS_ADDR_1 = 2;
-const int YELLOW_POINTS_ADDR_2 = 3;
-
-const int TEAM_FLAG_ADDR_2 = 4;
-
-const int CAPTURE_TIME_ADDR = 5;
-const int POINT_LIMITS_ADDR_1 = 6;
-const int POINT_LIMITS_ADDR_2 = 7;
-const int DEBUG_MODE_ADDR = 8;
-
-
-const int TIME_FOR_POINT = 9;
-
-const int MAX_POINTS = 9999;
-
-
-int yellowButtonState = LOW;
-int greenButtonState = LOW;
-int serviceButtonState = LOW;
-int selectedTeam = 0;
-int captureTime = 10;
-int captureCountDown = captureTime;
-int pointLimits = MAX_POINTS;
-int timeForOnePoint = 0;
-bool debugMode = false;
+byte yellowButtonState = LOW;
+byte greenButtonState = LOW;
+byte serviceButtonState = LOW;
+byte selectedTeam = 0; // текущая выбранная команда
 //1 -green
 //2 -yellow
+byte captureTime = 10; // время захвата точки
+short timeForPoint = 60; // сколько секунд нужно удерживать точку для получения очков
+byte pointsStep = 1; // количество очков за еденицу времени (timeToPoint)
+byte captureCountDown = captureTime;
+short pointLimits = MAX_POINTS;
+bool debugMode = false;
+short currentTimeForPoint = timeForPoint;
 
-int timeToRest = 10;
+// какую информацию нужно показывать
+// кривая реализация карусели
+const byte infoDisplayCOUNT = 2;
+byte infoDisplayTime[] = { 5, 15 };
+byte infoDisplayTimeCounter[] = { infoDisplayTime[0], infoDisplayTime[1] };
+byte currentInfo = 0;
+// 0 -текущие очки 
+// 1 -время до получения 1 единцы очков 
+// 2 -резерв
+
+byte timeToRest = 10;
 
 //GyverTM1637 yellow_tm1637(YELLOW_LED_CLK, YELLOW_LED_DIO);
 //GyverTM1637 green_tm1637(GREEN_LED_CLK, GREEN_LED_DIO);
@@ -58,6 +39,7 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 
 
 void setup() {
+  // erase();
   pinMode(YELLOW_BUTTON, INPUT);
   pinMode(GREEN_BUTTON, INPUT);
   pinMode(SERVICE_BUTTON, INPUT);
@@ -86,13 +68,32 @@ void setup() {
 }
 
 void loop() {
-//показываем текущий счетчик, если только не идет захват
-if (captureCountDown == captureTime) { 
-  lcd.setCursor(0,0);
-  lcd.print("YELLOW: " + String(yellowCount) + "      ");
-  lcd.setCursor(0,1);
-  lcd.print("GREEN : " + String(greenCount) + "      ");
-}
+  //показываем текущий счетчик, если только не идет захват
+  if (captureCountDown == captureTime) {
+    // какой счет показывать
+    if (currentInfo == 0  || timeForPoint <= 3) {
+      lcd.setCursor(0,0);
+      lcd.print("YELLOW: " + String(yellowCount) + "      ");
+      lcd.setCursor(0,1);
+      lcd.print("GREEN : " + String(greenCount) + "      ");
+    }
+    // вермя до захвата показываем, если только точка захвачена
+    if (currentInfo == 1 && selectedTeam != 0 && timeForPoint > 3) {
+      lcd.setCursor(0,0);
+      lcd.print("TIME TO POINT   ");
+      lcd.setCursor(0,1);
+      lcd.print("" + String(currentTimeForPoint) + "               ");
+    }
+    infoDisplayTimeCounter[currentInfo]--;
+    if (infoDisplayTimeCounter[currentInfo] <= 0) {
+      infoDisplayTimeCounter[currentInfo] = infoDisplayTime[currentInfo];
+      currentInfo++;
+      infoDisplayTimeCounter[currentInfo] = infoDisplayTime[currentInfo];
+    }
+    if (currentInfo == infoDisplayCOUNT) {
+      currentInfo = 0;
+    }
+  }
 
   yellowButtonState = LOW;
   greenButtonState = LOW;
@@ -100,19 +101,6 @@ if (captureCountDown == captureTime) {
   yellowButtonState = digitalRead(YELLOW_BUTTON);
   greenButtonState = digitalRead(GREEN_BUTTON);
   serviceButtonState = digitalRead(SERVICE_BUTTON);
-  if (debugMode) {
-    Serial.print("greenButtonState\n");
-    Serial.print(greenButtonState);
-    Serial.print("\n");
-    
-    Serial.print("yellowButtonState\n");
-    Serial.print(yellowButtonState);
-    Serial.print("\n");
-    
-    Serial.print("serviceButtonState\n");
-    Serial.print(serviceButtonState);
-    Serial.print("\n");
-  }
 
   // проверяем состояние кнопок
   // если нажата кнопка желтых, но при этом не нажата кнопка зеленых
@@ -130,12 +118,6 @@ if (captureCountDown == captureTime) {
       lcd.setCursor(0,1);
       lcd.print(captureCountDown);
       captureCountDown--; // уменьшаем счетчик захвата
-      if (debugMode) {
-        Serial.print("captureCountDown " + String(captureCountDown) + "\n");
-      }
-    }
-    if (debugMode) {
-      Serial.print("selectedTeam2 (green)\n");
     }
   }
   else
@@ -153,60 +135,52 @@ if (captureCountDown == captureTime) {
       lcd.setCursor(0,1);
       lcd.print(captureCountDown);
       captureCountDown--;
-      if (debugMode) {
-        Serial.print("captureCountDown " + String(captureCountDown) + "\n");
-      }
-    }
-    
-    if (debugMode) {
-      Serial.print("selectedTeam1 (yellow)\n");
     }
   } else {
     // если не одна кнопка не нажата, то сбрасываем счетчик захвата
     captureCountDown = captureTime;
-    if (debugMode) {
-      Serial.print("Capturing was reset\n");
-    }
   }
 
-  // быстрый рестарт (нужно удерживать 2 кнопки одновременно более 15 секунд)
+  // сброс захвата (нужно удерживать 2 кнопки одновременно более 10 секунд)
   if (yellowButtonState == HIGH && greenButtonState == HIGH) {
     timeToRest--;
-    if (timeToRest == 0) {
+    lcd.setCursor(0,0);
+    lcd.print("RESETING        ");
+    lcd.setCursor(0,1);
+    lcd.print("" + String(timeToRest) + "                 ");
+    if (timeToRest <= 0) {
       selectedTeam = 0;
-      yellowCount = 0;
-      greenCount = 0;
     }
   } else {
-    timeToRest = 15;
+    timeToRest = TIME_TO_RESET;
   }
 
   // если не происходит захват точки, то прибавляем очки команде
-  if (greenCount < pointLimits && yellowCount < pointLimits && captureCountDown == captureTime) {
+  if (greenCount < pointLimits && yellowCount < pointLimits && captureCountDown == captureTime && timeToRest == TIME_TO_RESET) {
     // если выбрана текущая команда 2 (желтые)
     if (selectedTeam == 2) {
-      yellowCount++;
-      if (debugMode) {
-        Serial.print("yellowCount++\n");
-        Serial.print(yellowCount);
-        Serial.print("\n");
-      }
-      // сохраняем очки каждые 10 секунд
-      if (yellowCount % 10 == 0) {
-        savePoints(greenCount, yellowCount, selectedTeam);
+      if (currentTimeForPoint <= 0) {
+        yellowCount += pointsStep;
+        // сохраняем очки каждые 10 секунд
+        if (yellowCount % 10 == 0) {
+          savePoints(greenCount, yellowCount, selectedTeam);
+        }
+        currentTimeForPoint = timeForPoint;
+      } else {
+        currentTimeForPoint--;
       }
     }
     // если выбрана текущая команда 1 (зеленые)
     if (selectedTeam == 1) {
-      greenCount++;
-      if (debugMode) {
-        Serial.print("greenCount++\n");
-        Serial.print(greenCount);
-        Serial.print("\n");
-      }
-      // сохраняем очки каждые 10 секунд
-      if (greenCount % 10 == 0) {
-        savePoints(greenCount, yellowCount, selectedTeam);
+      if (currentTimeForPoint <= 0) {
+        greenCount += pointsStep;
+        // сохраняем очки каждые 10 секунд
+        if (greenCount % 10 == 0) {
+          savePoints(greenCount, yellowCount, selectedTeam);
+        }
+        currentTimeForPoint = timeForPoint;
+      } else {
+        currentTimeForPoint--;
       }
     }
   }
@@ -229,7 +203,7 @@ if (captureCountDown == captureTime) {
     savePoints(greenCount, yellowCount, selectedTeam);
   }
 
-  Serial.flush();
+  // TODO написать нормальный программный таймер
   delay(1000);
 
   // если нажата сервисная кнопка на плате, то выводим описание настроек в серийный порт (вывод данных на PC или телефон через bluetooth)
@@ -240,35 +214,6 @@ if (captureCountDown == captureTime) {
   // чтение данных из серийного порта, можно подавать команды через PC или из телефона при пожключении по bluetooth.
   if (Serial.available()) {
     String command = Serial.readString();
-    if (debugMode) {
-      Serial.print("Received:" + command);
-    }
     readConfigurationFromSerialPort(command);
   }
-}
-
-void help() {
-  Serial.print("Задать время захвата: -c N\n");
-  Serial.print("Задать лимит очков  : -l N\n");
-  Serial.print("Перезапустить счет  : -r\n");
-  Serial.print("Отладка             : -d 0/1\n");
-}
-
-void currentSettings() {
-  Serial.print("c=" + String(captureTime) + "\n");
-  Serial.print("l=" + String(pointLimits) + "\n");
-  Serial.print("d=" + String(debugMode) + "\n");
-}
-
-String getProgress(int countDown, int captureTime) {
-  countDown = captureTime - countDown;
-  int segments = round(16 / 100 * (round(countDown / captureTime * 100))) + 0;
-  Serial.print("segments" + String(segments) + "\n");
-  String result;
-  for (int i = 0; i < segments; i++) {
-    result += "#";
-  }
-  Serial.print("PROGRESS BAR\n");
-  Serial.print(result + "\n");
-  return result;
 }
