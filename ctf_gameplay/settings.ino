@@ -230,7 +230,7 @@ void readConfigurationFromSerialPort(String command) {
     byte pointsStep1 = (pointsStep - pointsStep % 100) / 100;
     byte pointsStep2 = pointsStep % 100;
     EEPROM.write(POINT_PER_TIME_ADDR_1, pointsStep1);
-    EEPROM.write(POINT_PER_TIME_ADDR_1, pointsStep2);
+    EEPROM.write(POINT_PER_TIME_ADDR_2, pointsStep2);
     Serial.print("Очки за еденицу времени удержания: " + String(pointsStep) + "\n");
   }
   if (command.startsWith("-it0")) {
@@ -246,7 +246,7 @@ void readConfigurationFromSerialPort(String command) {
     command.trim();
     command.replace("-it1", "");
     infoDisplayTime[1] = command.toInt();
-    EEPROM.write(DISPLAY_TIME_ADDR_1, infoDisplayTime[1]);
+    EEPROM.write(DISPLAY_TIME_ADDR_2, infoDisplayTime[1]);
     Serial.print("Время отображения таймера до получения очков: " + String(infoDisplayTime[1]) + "\n");
   }
 }
