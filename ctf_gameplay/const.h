@@ -37,6 +37,7 @@ const byte DISPLAY_TIME_ADDR_2 = 14;
 
 const byte DEFAULT_TIME_FOR_POINT = 60;
 const byte DEFAULT_POINT_PER_TIME = 1;
+const byte DEFAULT_CAPTURE_TIME = 15;
 
 const byte DEFAULT_DISPLAY_TIME = 5;
 

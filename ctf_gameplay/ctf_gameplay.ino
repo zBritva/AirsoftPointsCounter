@@ -13,8 +13,8 @@ byte serviceButtonState = LOW;
 byte selectedTeam = 0; // текущая выбранная команда
 //1 -green
 //2 -yellow
-byte captureTime = 10; // время захвата точки
-short timeForPoint = 60; // сколько секунд нужно удерживать точку для получения очков
+byte captureTime = DEFAULT_CAPTURE_TIME; // время захвата точки
+short timeForPoint = DEFAULT_TIME_FOR_POINT; // сколько секунд нужно удерживать точку для получения очков
 byte pointsStep = 1; // количество очков за еденицу времени (timeToPoint)
 byte captureCountDown = captureTime;
 short pointLimits = MAX_POINTS;
@@ -24,8 +24,8 @@ short currentTimeForPoint = timeForPoint;
 // какую информацию нужно показывать
 // кривая реализация карусели
 const byte infoDisplayCOUNT = 2;
-byte infoDisplayTime[] = { 5, 15 };
-byte infoDisplayTimeCounter[] = { infoDisplayTime[0], infoDisplayTime[1] };
+byte infoDisplayTime[2] = { 5, 15 };
+byte infoDisplayTimeCounter[2] = { 5, 15 };
 byte currentInfo = 0;
 // 0 -текущие очки 
 // 1 -время до получения 1 единцы очков 
@@ -43,7 +43,6 @@ void setup() {
   pinMode(YELLOW_BUTTON, INPUT);
   pinMode(GREEN_BUTTON, INPUT);
   pinMode(SERVICE_BUTTON, INPUT);
-  loadPoints();
   Serial.begin(9600);
 
   lcd.init();
@@ -65,9 +64,12 @@ void setup() {
     delay(1500);
   }
   lcd.clear();
+  loadPoints();
+  Serial.print("Setup done\n");
 }
 
 void loop() {
+  // Serial.print("-1currentTimeForPoint" + String(currentTimeForPoint) + "\n");
   //показываем текущий счетчик, если только не идет захват
   if (captureCountDown == captureTime) {
     // какой счет показывать
@@ -162,7 +164,7 @@ void loop() {
       if (currentTimeForPoint <= 0) {
         yellowCount += pointsStep;
         // сохраняем очки каждые 10 секунд
-        if (yellowCount % 10 == 0) {
+        if (yellowCount % 10 == 0 || timeForPoint > 10) {
           savePoints(greenCount, yellowCount, selectedTeam);
         }
         currentTimeForPoint = timeForPoint;
@@ -175,7 +177,7 @@ void loop() {
       if (currentTimeForPoint <= 0) {
         greenCount += pointsStep;
         // сохраняем очки каждые 10 секунд
-        if (greenCount % 10 == 0) {
+        if (greenCount % 10 == 0 || timeForPoint > 10) {
           savePoints(greenCount, yellowCount, selectedTeam);
         }
         currentTimeForPoint = timeForPoint;

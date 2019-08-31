@@ -32,10 +32,10 @@ void loadPoints() {
   if (yellowCount2 > 100) {
     yellowCount2 = 0;
   }
-  yellowCount = yellowCount1 * 100 + yellowCount2;
-  Serial.write("yellowCount\n");
+  yellowCount = short(yellowCount1) * 100 + short(yellowCount2);
+  Serial.print("yellowCount\n");
   Serial.print(String(yellowCount));
-  Serial.write("\n");
+  Serial.print("\n");
   
 // ====================================================
 // greenCount
@@ -50,16 +50,15 @@ void loadPoints() {
   if (greenCount2 > 100) {
     greenCount2 = 0;
   }
-  greenCount = greenCount1 * 100 + greenCount2;
-  Serial.write("greenCount\n");
+  greenCount = short(greenCount1) * 100 + short(greenCount2);
+  Serial.print("greenCount\n");
   Serial.print(String(greenCount));     
-  Serial.write("\n");
+  Serial.print("\n");
   
 // ====================================================
 // selectedTeam
 // ====================================================
   selectedTeam = EEPROM.read(TEAM_FLAG_ADDR_2);
-
 // ====================================================
 // captureTime
 // ====================================================
@@ -106,6 +105,9 @@ void loadPoints() {
   if (timeForPoint <= 0) {
     timeForPoint = 0;
   }
+  if (currentTimeForPoint <= 0) {
+    currentTimeForPoint = 0;
+  }
 
 // ====================================================
 // pointsStep
@@ -137,6 +139,7 @@ void loadPoints() {
   if (infoDisplayTime[1] <= 0) {
     infoDisplayTime[1] = 15;
   }
+  Serial.print("Load settings done\n");
 }
 
 // функция для стирания памяти в используемых ардесах, вызывать для новый плат, перед заливанием окончательной прошики 
@@ -172,7 +175,7 @@ void readConfigurationFromSerialPort(String command) {
       settings();
   }
   if (command.startsWith("-c ")) {
-    captureTime = 0;
+    captureTime = DEFAULT_CAPTURE_TIME;
     command.trim();
     command.replace("-c ", "");
     captureTime = command.toInt();
@@ -195,6 +198,10 @@ void readConfigurationFromSerialPort(String command) {
     yellowCount = 0;
     greenCount = 0;
     selectedTeam = 0;
+    currentTimeForPoint = timeForPoint;
+    currentInfo = 0;
+    infoDisplayTimeCounter[0] = infoDisplayTime[0];
+    infoDisplayTimeCounter[1] = infoDisplayTime[1];
     savePoints(greenCount, yellowCount, selectedTeam);
     Serial.print("Сброс счетчика\n");
     lcd.clear();
