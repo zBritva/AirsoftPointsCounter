@@ -1,6 +1,13 @@
 //#include <GyverTM1637.h>
 #include <EEPROM.h>
 #include <Wire.h> 
+/*
+Возможно нужно пофиксить либу LiquidCrystal_I2C функция должна возвращать 1 а не 0
+inline size_t LiquidCrystal_I2C::write(uint8_t value) {
+ send(value, Rs);
+ return 0;
+}
+*/
 #include <LiquidCrystal_I2C.h>
 #include "const.h"
 
@@ -24,8 +31,8 @@ short currentTimeForPoint = timeForPoint;
 // какую информацию нужно показывать
 // кривая реализация карусели
 const byte infoDisplayCOUNT = 2;
-byte infoDisplayTime[2] = { 5, 15 };
-byte infoDisplayTimeCounter[2] = { 5, 15 };
+byte infoDisplayTime[] = { 5, 15, 15 };
+byte infoDisplayTimeCounter[] = { 5, 15, 15 };
 byte currentInfo = 0;
 // 0 -текущие очки 
 // 1 -время до получения 1 единцы очков 
@@ -109,6 +116,10 @@ void loop() {
   if (yellowButtonState == HIGH && greenButtonState == LOW) {
     // если счетчик захвата 0, то точка захвачена
     if (captureCountDown <= 0) {
+      // сбросит текущий счетчик времени для получения очков, если другая команда захватила точку
+      if (selectedTeam == 1) {
+        currentTimeForPoint = timeForPoint;
+      }
       selectedTeam = 2;
       captureCountDown = captureTime;
     } else if (selectedTeam != 2) { // проверяем что точка не занято желтыми (захват захваченной точки не имеет смысла)
@@ -126,6 +137,10 @@ void loop() {
   // аналогично для желтых
   if (greenButtonState == HIGH && yellowButtonState == LOW ) {
     if (captureCountDown <= 0) {
+      // сбросит текущий счетчик времени для получения очков, если другая команда захватила точку
+      if (selectedTeam == 2) {
+        currentTimeForPoint = timeForPoint;
+      }
       selectedTeam = 1;
       captureCountDown = captureTime;
     } else if (selectedTeam != 1) {
