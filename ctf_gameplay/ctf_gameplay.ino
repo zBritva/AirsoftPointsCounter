@@ -84,7 +84,7 @@ void loop() {
       lcd.setCursor(0,0);
       lcd.print("YELLOW: " + String(yellowCount) + "      ");
       lcd.setCursor(0,1);
-      lcd.print("GREEN : " + String(greenCount) + "      ");
+      lcd.print("BLUE : " + String(greenCount) + "      ");
     }
     // вермя до захвата показываем, если только точка захвачена
     if (currentInfo == 1 && selectedTeam != 0 && timeForPoint > 3) {
@@ -162,11 +162,11 @@ void loop() {
   if (yellowButtonState == HIGH && greenButtonState == HIGH) {
     timeToRest--;
     lcd.setCursor(0,0);
-    lcd.print("RESETING        ");
+    lcd.print("RESETЕING       ");
     lcd.setCursor(0,1);
     lcd.print("" + String(timeToRest) + "                 ");
     if (timeToRest <= 0) {
-      selectedTeam = 0;
+      resetGame();
     }
   } else {
     timeToRest = TIME_TO_RESET;
@@ -207,14 +207,14 @@ void loop() {
     // смотрим у кого больше очков и выводим на экран победителя
     if (greenCount > yellowCount) {
       lcd.setCursor(0,0);
-      lcd.print("GREEN WON: " + String(greenCount));
+      lcd.print("BLUE WON: " + String(greenCount));
       lcd.setCursor(0,1);
       lcd.print("YELLOW   : " + String(yellowCount));
     } else {
       lcd.setCursor(0,0);
       lcd.print("YELLOW WON: " + String(yellowCount));
       lcd.setCursor(0,1);
-      lcd.print("GREEN     : " + String(greenCount));
+      lcd.print("BLUE     : " + String(greenCount));
     }
     // Сохраняем очки в постоянной памяти (после сохранения сбой в питании не влияет на результат)
     savePoints(greenCount, yellowCount, selectedTeam);

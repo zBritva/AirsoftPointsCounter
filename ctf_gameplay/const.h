@@ -42,4 +42,4 @@ const byte DEFAULT_CAPTURE_TIME = 15;
 const byte DEFAULT_DISPLAY_TIME = 5;
 
 const short MAX_POINTS = 9999;
-const byte TIME_TO_RESET = 10;
+const byte TIME_TO_RESET = 60;

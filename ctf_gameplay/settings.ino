@@ -166,6 +166,19 @@ void erase() {
   EEPROM.write(20, 0);
 }
 
+void resetGame() {
+  yellowCount = 0;
+  greenCount = 0;
+  selectedTeam = 0;
+  currentTimeForPoint = timeForPoint;
+  currentInfo = 0;
+  infoDisplayTimeCounter[0] = infoDisplayTime[0];
+  infoDisplayTimeCounter[1] = infoDisplayTime[1];
+  savePoints(greenCount, yellowCount, selectedTeam);
+  Serial.print("Сброс счетчика\n");
+  lcd.clear();
+}
+
 // функция считает команды с серийного порта и меняет настройки
 void readConfigurationFromSerialPort(String command) {
   if (command.startsWith("-h")) {
@@ -195,16 +208,7 @@ void readConfigurationFromSerialPort(String command) {
     lcd.clear();
   }
   if (command.startsWith("-r")) {
-    yellowCount = 0;
-    greenCount = 0;
-    selectedTeam = 0;
-    currentTimeForPoint = timeForPoint;
-    currentInfo = 0;
-    infoDisplayTimeCounter[0] = infoDisplayTime[0];
-    infoDisplayTimeCounter[1] = infoDisplayTime[1];
-    savePoints(greenCount, yellowCount, selectedTeam);
-    Serial.print("Сброс счетчика\n");
-    lcd.clear();
+    resetGame();
   }
   // if (command.startsWith("-d ")) {
   //   debugMode = 0;
