@@ -1,17 +1,17 @@
 const byte YELLOW_LED_CLK = 4;
 const byte YELLOW_LED_DIO = 3; 
 
-const byte GREEN_LED_CLK = 6;
-const byte GREEN_LED_DIO = 5;
+const byte BLUE_LED_CLK = 6;
+const byte BLUE_LED_DIO = 5;
 
-const byte GREEN_BUTTON = 8;
+const byte BLUE_BUTTON = 8;
 const byte YELLOW_BUTTON = 9;
 
 const byte SERVICE_BUTTON = 2;
 
 
-const byte GREEN_POINTS_ADDR_1 = 0;
-const byte GREEN_POINTS_ADDR_2 = 1;
+const byte BLUE_POINTS_ADDR_1 = 0;
+const byte BLUE_POINTS_ADDR_2 = 1;
 
 
 const byte YELLOW_POINTS_ADDR_1 = 2;

@@ -12,10 +12,10 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 #include "const.h"
 
 short yellowCount = 0;
-short greenCount = 0;
+short blueCount = 0;
 
 byte yellowButtonState = LOW;
-byte greenButtonState = LOW;
+byte blueButtonState = LOW;
 byte serviceButtonState = LOW;
 byte selectedTeam = 0; // текущая выбранная команда
 //1 -green
@@ -48,7 +48,7 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 void setup() {
   // erase();
   pinMode(YELLOW_BUTTON, INPUT);
-  pinMode(GREEN_BUTTON, INPUT);
+  pinMode(BLUE_BUTTON, INPUT);
   pinMode(SERVICE_BUTTON, INPUT);
   Serial.begin(9600);
 
@@ -58,7 +58,7 @@ void setup() {
   lcd.print("Hello,");
   lcd.setCursor(0,1);
   lcd.print("Airsoft player");
-  if (yellowCount == 0 && greenCount == 0) {
+  if (yellowCount == 0 && blueCount == 0) {
     delay(1500);
     lcd.setCursor(0,0);
     lcd.print("Made by: zBritva");
@@ -84,7 +84,7 @@ void loop() {
       lcd.setCursor(0,0);
       lcd.print("YELLOW: " + String(yellowCount) + "      ");
       lcd.setCursor(0,1);
-      lcd.print("BLUE : " + String(greenCount) + "      ");
+      lcd.print("BLUE : " + String(blueCount) + "      ");
     }
     // вермя до захвата показываем, если только точка захвачена
     if (currentInfo == 1 && selectedTeam != 0 && timeForPoint > 3) {
@@ -105,15 +105,15 @@ void loop() {
   }
 
   yellowButtonState = LOW;
-  greenButtonState = LOW;
+  blueButtonState = LOW;
   serviceButtonState = LOW;
   yellowButtonState = digitalRead(YELLOW_BUTTON);
-  greenButtonState = digitalRead(GREEN_BUTTON);
+  blueButtonState = digitalRead(BLUE_BUTTON);
   serviceButtonState = digitalRead(SERVICE_BUTTON);
 
   // проверяем состояние кнопок
   // если нажата кнопка желтых, но при этом не нажата кнопка зеленых
-  if (yellowButtonState == HIGH && greenButtonState == LOW) {
+  if (yellowButtonState == HIGH && blueButtonState == LOW) {
     // если счетчик захвата 0, то точка захвачена
     if (captureCountDown <= 0) {
       // сбросит текущий счетчик времени для получения очков, если другая команда захватила точку
@@ -135,7 +135,7 @@ void loop() {
   }
   else
   // аналогично для желтых
-  if (greenButtonState == HIGH && yellowButtonState == LOW ) {
+  if (blueButtonState == HIGH && yellowButtonState == LOW ) {
     if (captureCountDown <= 0) {
       // сбросит текущий счетчик времени для получения очков, если другая команда захватила точку
       if (selectedTeam == 2) {
@@ -159,7 +159,7 @@ void loop() {
   }
 
   // сброс захвата (нужно удерживать 2 кнопки одновременно более 10 секунд)
-  if (yellowButtonState == HIGH && greenButtonState == HIGH) {
+  if (yellowButtonState == HIGH && blueButtonState == HIGH) {
     timeToRest--;
     lcd.setCursor(0,0);
     lcd.print("RESETЕING       ");
@@ -173,14 +173,14 @@ void loop() {
   }
 
   // если не происходит захват точки, то прибавляем очки команде
-  if (greenCount < pointLimits && yellowCount < pointLimits && captureCountDown == captureTime && timeToRest == TIME_TO_RESET) {
+  if (blueCount < pointLimits && yellowCount < pointLimits && captureCountDown == captureTime && timeToRest == TIME_TO_RESET) {
     // если выбрана текущая команда 2 (желтые)
     if (selectedTeam == 2) {
       if (currentTimeForPoint <= 0) {
         yellowCount += pointsStep;
         // сохраняем очки каждые 10 секунд
         if (yellowCount % 10 == 0 || timeForPoint > 10) {
-          savePoints(greenCount, yellowCount, selectedTeam);
+          savePoints(blueCount, yellowCount, selectedTeam);
         }
         currentTimeForPoint = timeForPoint;
       } else {
@@ -190,10 +190,10 @@ void loop() {
     // если выбрана текущая команда 1 (зеленые)
     if (selectedTeam == 1) {
       if (currentTimeForPoint <= 0) {
-        greenCount += pointsStep;
+        blueCount += pointsStep;
         // сохраняем очки каждые 10 секунд
-        if (greenCount % 10 == 0 || timeForPoint > 10) {
-          savePoints(greenCount, yellowCount, selectedTeam);
+        if (blueCount % 10 == 0 || timeForPoint > 10) {
+          savePoints(blueCount, yellowCount, selectedTeam);
         }
         currentTimeForPoint = timeForPoint;
       } else {
@@ -203,21 +203,21 @@ void loop() {
   }
   
   // если команда набрала необходимое количество очков, то останавливаем счетчик
-  if (greenCount >= pointLimits || yellowCount >= pointLimits) {
+  if (blueCount >= pointLimits || yellowCount >= pointLimits) {
     // смотрим у кого больше очков и выводим на экран победителя
-    if (greenCount > yellowCount) {
+    if (blueCount > yellowCount) {
       lcd.setCursor(0,0);
-      lcd.print("BLUE WON: " + String(greenCount));
+      lcd.print("BLUE WON: " + String(blueCount));
       lcd.setCursor(0,1);
       lcd.print("YELLOW   : " + String(yellowCount));
     } else {
       lcd.setCursor(0,0);
       lcd.print("YELLOW WON: " + String(yellowCount));
       lcd.setCursor(0,1);
-      lcd.print("BLUE     : " + String(greenCount));
+      lcd.print("BLUE     : " + String(blueCount));
     }
     // Сохраняем очки в постоянной памяти (после сохранения сбой в питании не влияет на результат)
-    savePoints(greenCount, yellowCount, selectedTeam);
+    savePoints(blueCount, yellowCount, selectedTeam);
   }
 
   // TODO написать нормальный программный таймер
