@@ -10,6 +10,9 @@ inline size_t LiquidCrystal_I2C::write(uint8_t value) {
 */
 // #include <LiquidCrystal_I2C.h>
 
+/*
+ * PORT configuration
+ */
 const byte YELLOW_LED_CLK = 9;
 const byte YELLOW_LED_DIO = 8;
 
@@ -17,9 +20,18 @@ const byte BLUE_LED_CLK = 7;
 const byte BLUE_LED_DIO = 6;
 
 const byte BLUE_BUTTON = 3;
-const byte YELLOW_BUTTON = 5;
+const byte YELLOW_BUTTON = 2;
 
-const byte SERVICE_BUTTON = 2;
+const byte SERVICE_BUTTON = 5; 
+
+const byte BLUE_TEAM_LED = 12;
+const byte YELLOW_TEAM_LED = 10;
+
+const byte TONE_PORT = 11;
+
+/*
+ * MEMORY configuration
+ */
 
 const byte BLUE_POINTS_ADDR_1 = 0;
 const byte BLUE_POINTS_ADDR_2 = 1;
@@ -47,6 +59,7 @@ const byte CUR_TIME_FOR_POINT_ADDR_1 = 15;
 const byte CUR_TIME_FOR_POINT_ADDR_2 = 16;
 
 const byte TONE_SETTINGS_ADDR = 17;
+#define NOTE 4978
 
 const byte DEFAULT_TIME_FOR_POINT = 60;
 const byte DEFAULT_POINT_PER_TIME = 1;
@@ -57,12 +70,11 @@ const byte DEFAULT_DISPLAY_TIME = 5;
 const short MAX_POINTS = 9999;
 const byte TIME_TO_RESET = 60;
 
-const byte BLUE_TEAM_LED = 12;
-const byte YELLOW_TEAM_LED = 10;
-
-const byte TONE_PORT = 4;
-
 const byte TIME_FOR_POINT_MIN_LIMIT = 3;
+
+/*
+ * VARIABLES
+ */
 
 short yellowCount = 0;
 short blueCount = 0;
@@ -116,8 +128,8 @@ void setup()
   Serial.print("yellowCount " + String(yellowCount) + "\n");
   Serial.print("blueCount " + String(yellowCount) + "\n");
   Serial.print("pointLimits " + String(pointLimits) + "\n");
-  yellow_tm1637.brightness(5);
-  blue_tm1637.brightness(5);
+  yellow_tm1637.brightness(7);
+  blue_tm1637.brightness(7);
   yellow_tm1637.displayInt(0);
   blue_tm1637.displayInt(0);
 
@@ -149,13 +161,14 @@ void displayInfo(int yellow, int blue)
 }
 
 bool isTone = false;
-void tone(bool forced = false) {
+void tone_(bool forced = false) {
   if (!isTone && !forced) {
     return;
   }
-  digitalWrite(TONE_PORT, HIGH);
-  delay(100);
-  digitalWrite(TONE_PORT, LOW);
+  tone(TONE_PORT, NOTE, 500);
+  // digitalWrite(TONE_PORT, HIGH);
+  // delay(100);
+  // digitalWrite(TONE_PORT, LOW);
 }
 
 int savedValue = 0;
@@ -416,7 +429,7 @@ void loop()
     { // проверяем что точка не занято желтыми (захват захваченной точки не имеет смысла)
       displayInfo(captureCountDown, captureCountDown);
       captureCountDown--; // уменьшаем счетчик захвата
-      tone();
+      tone_();
     }
   }
   else
@@ -440,7 +453,7 @@ void loop()
       // чистим дисплей перед началом отчета
       displayInfo(captureCountDown, captureCountDown);
       captureCountDown--;
-      tone();
+      tone_();
     }
   }
   else
@@ -479,9 +492,9 @@ void loop()
         yellowCount += pointsStep;
         displayInfo(yellowCount, blueCount);
         if (timeForPoint > TIME_FOR_POINT_MIN_LIMIT) {
-          tone();
+          tone_();
           delay(100);
-          tone();
+          tone_();
         }
         // сохраняем очки каждые 10 секунд
         if (yellowCount % 10 == 0 || timeForPoint > 10)
@@ -504,9 +517,9 @@ void loop()
         blueCount += pointsStep;
         displayInfo(yellowCount, blueCount);
         if (timeForPoint > TIME_FOR_POINT_MIN_LIMIT) {
-          tone();
+          tone_();
           delay(150);
-          tone();
+          tone_();
         }
         // сохраняем очки каждые 10 секунд
         if (blueCount % 10 == 0 || timeForPoint > 10)
@@ -797,7 +810,7 @@ void setCaptureTime(byte captureTime)
 void setTone(bool isOn)
 {
   if (isOn && isTone != isOn) {
-    tone();
+    tone_();
   }
   isTone = isOn;
   EEPROM.write(TONE_SETTINGS_ADDR, isOn);
