@@ -1,0 +1,7 @@
+{
+    "programmer": "AVRISP mkII",
+    "board": "arduino:avr:pro",
+    "configuration": "cpu=16MHzatmega328",
+    "port": "/dev/cu.usbserial-A50285BI",
+    "sketch": "ctf_gameplay_led2/ctf_gameplay.ino"
+}
